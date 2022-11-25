@@ -31,7 +31,7 @@ class HyperspaceWorker extends EventEmitter {
     this.dbPublicLibraryTemp = {}
     this.fileUtility = new Fileparser('')
     console.log('{in-hyperspace}')
-    this.hello = 'hyperspace'  
+    this.hello = 'hyperspace'
   }
 
   /**
@@ -43,14 +43,24 @@ class HyperspaceWorker extends EventEmitter {
     await this.setupHyperspace()
     // console.log('Hyperspace daemon connected, status:')
     // console.log(await this.client.status())
+    await this.setupHyperdrive()
+    await this.setupHyperbee()
+  }
 
+  /**
+  * pass on websocket to library
+  * @method setWebsocket
+  *
+  */
+  setWebsocket = function (ws) {
+    this.wsocket = ws
   }
 
   /**
    * setup hypercore protocol
-   * @method startHyperspace
+   * @method setupHyperspace
    *
-   */
+  */
   setupHyperspace = async function () {
     try {
       this.client = new HyperspaceClient()
@@ -84,6 +94,7 @@ class HyperspaceWorker extends EventEmitter {
    *
    */
   setupHyperdrive = async function () {
+    console.log('setup hpyerdrive')
     // Create a Hyperdrive
     const corestore = new Corestore(os.homedir() + '/.hyperspace/storagedrive')
     this.drive = new Hyperdrive(corestore, null)
@@ -93,7 +104,11 @@ class HyperspaceWorker extends EventEmitter {
     // console.log('  ', this.drive.key.toString('hex'))
     // console.log('  ', this.drive)
     // await this.client.network.configure(this.drive, {announce: true, lookup: true})
-    return this.drive.key.toString('hex')
+    // return this.drive.key.toString('hex')
+    let startDrivePubkey = {}
+    startDrivePubkey.type = 'hyperdrive-pubkey'
+    startDrivePubkey.data = this.drive.key.toString('hex')
+    this.wsocket.send(JSON.stringify(startDrivePubkey))
   }
 
   /**
@@ -157,7 +172,11 @@ class HyperspaceWorker extends EventEmitter {
     this.client.replicate(this.dbKBledger.feed)
     beePubkeys.push({'kbledger': this.dbKBledger._feed.key.toString('hex')})
 
-    return beePubkeys
+    // return beePubkeys
+    let startBeePubkey = {}
+    startBeePubkey.type = 'hyperbee-pubkeys'
+    startBeePubkey.data = beePubkeys
+    this.wsocket.send(JSON.stringify(startBeePubkey))
   }
 
   /**
@@ -494,14 +513,15 @@ class HyperspaceWorker extends EventEmitter {
    *
    */
   hyperdriveWritestream = async function (fileData) {
+    console.log('start write drive')
     let localthis = this
     const ws = this.drive.createWriteStream('/blob.txt')
 
-    ws.write('Hello, ')
-    ws.write('world!')
-    ws.end()
+    this.wsocketwrite('Hello, ')
+    this.wsocketwrite('world!')
+    this.wsocketend()
 
-    ws.on('close', function () {
+    this.wsocketon('close', function () {
       const rs = localthis.drive.createReadStream('/blob.txt')
       rs.pipe(process.stdout) // prints Hello, world!
     })
@@ -550,6 +570,7 @@ class HyperspaceWorker extends EventEmitter {
     var buffer = Buffer.from(dataUrl, 'base64')
     fs.writeFileSync('data.csv', buffer)
     if (path === 'text/csv') {
+      console.log('put hyperdirve')
       await this.drive.put(hyperdrivePath, fs.readFileSync('data.csv', 'utf-8'))
       // now remove the temp file for converstion
       fs.unlink('data.csv', (err => {
@@ -596,6 +617,7 @@ class HyperspaceWorker extends EventEmitter {
    *
    */
   hyperdriveLocalfile = async function (path) {
+    console.log('get drive entry')
     // File reads to buffer and recreate file
     // const bufFromGet2 = await this.drive.get(path)
     const { value: entry } = await this.drive.entry(path)
@@ -614,6 +636,7 @@ class HyperspaceWorker extends EventEmitter {
   *
   */
   readCSVfile = async function (fpath, headerSet) {
+    console.log('read cvs dirve')
     // const rs2 = this.drive.createReadStream(fpath) // 'text/csv/testshed11530500.csv') // '/blob.txt')
     // rs2.pipe(process.stdout) // prints file content
     const rs = this.drive.createReadStream(fpath) // 'text/csv/testshed11530500.csv') // '/blob.txt')
