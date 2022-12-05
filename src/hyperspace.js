@@ -30,7 +30,6 @@ class HyperspaceWorker extends EventEmitter {
     this.dbKBledger = {}
     this.dbPublicLibraryTemp = {}
     this.fileUtility = new Fileparser('')
-    console.log('{in-hyperspace}')
     this.hello = 'hyperspace'
   }
 
@@ -117,6 +116,7 @@ class HyperspaceWorker extends EventEmitter {
    *
    */
    setupHyperbee = async function () {
+    console.log('hyperbees setting up')
     let beePubkeys = []
     const store = this.client.corestore('peerspace-hyperbee')
 
