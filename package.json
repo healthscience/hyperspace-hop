@@ -1,6 +1,6 @@
 {
   "name": "hyperspace-hop",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "API to hyperspace",
   "type": "module",
   "main": "src/hyperspace.js",
@@ -24,7 +24,7 @@
   "homepage": "https://github.com/healthscience/hyperspace-hop#readme",
   "dependencies": {
     "atob": "^2.1.2",
-    "axios": "^0.19.2",
+    "axios": "^1.2.1",
     "corestore": "^6.0.2",
     "csv-parser": "^3.0.0",
     "hyperbee": "^1.10.1",
